@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/csv"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/tidwall/gjson"
 )
@@ -17,14 +21,31 @@ func main() {
 		return
 	}
 
-	getFleet(token)
+	fieldList, _ := getFieldList()
+	if len(fieldList) == 0 {
+		log.Fatal("No fields selected")
+	}
+
+	processFleet(token, "output.csv", fieldList)
 
 	signout(token)
 }
 
-func getFleet(token string) {
+func processFleet(token, outFile string, fieldList []string) {
 
-	modList := make([]string, 0)
+	fieldCount := len(fieldList)
+
+	os.Remove(outFile)
+	f, err := os.Create(outFile)
+	if err != nil {
+		log.Fatal("Error creating output file ", err)
+	}
+	defer f.Close()
+
+	w := csv.NewWriter(f)
+
+	// write csv header
+	w.Write(fieldList)
 
 	for page := 1; ; page++ {
 
@@ -53,24 +74,32 @@ func getFleet(token string) {
 		}
 
 		bodyString := string(body)
+		if bodyString == "[]" {
+			break
+		}
 
-		count := 0
+		mods := gjson.Parse(bodyString)
 
-		mods := gjson.Get(bodyString, "#.model.name")
 		mods.ForEach(func(key, value gjson.Result) bool {
-			modList = append(modList, value.String())
-			count++
+
+			vals := make([]string, 0, fieldCount)
+
+			for _, field := range fieldList {
+				v := value.Get(field)
+				vals = append(vals, v.String())
+			}
+
+			w.Write(vals)
+
 			return true // keep iterating
 		})
 
-		if count == 0 {
-			break
-		}
 	}
 
-	log.Printf("Got ship count %d", len(modList))
-	for _, mod := range modList {
-		log.Print(mod)
+	w.Flush()
+
+	if err := w.Error(); err != nil {
+		log.Fatal("Error writing csv file ", err)
 	}
 
 }
@@ -124,4 +153,29 @@ func signout(token string) {
 
 	log.Print("delete msg ", msg.Str)
 
+}
+
+func getFieldList() ([]string, error) {
+
+	list := make([]string, 0, 50)
+
+	file, err := os.Open("field_list")
+	if err != nil {
+		log.Fatal("Error opening field_list file:", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if len(line) > 0 && line[0:1] != "#" {
+			list = append(list, line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal("Scanner error ", err)
+	}
+
+	return list, nil
 }
