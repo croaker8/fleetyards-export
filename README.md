@@ -6,7 +6,7 @@ This command will login to your fleetyards.net account and export the data for t
 Edit the export-field-list file and add # at beginning of line to exclude specific fields from the CSV output.
 
 ## Usage
-Usage show if -h or --help argument is supplied:
+Usage show if -h or --help argument is supplied. Arguments -u and -p are required.
 
     fleetyards-export is a tool for exporting hanger data from fleetyards.net
 
