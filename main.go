@@ -21,9 +21,14 @@ func main() {
 		return
 	}
 
-	fieldList, _ := getFieldList()
+	fieldList, err := getFieldList()
+	if err != nil {
+		os.Exit(1)
+	}
+
 	if len(fieldList) == 0 {
 		log.Fatal("No fields selected")
+		os.Exit(2)
 	}
 
 	processFleet(token, "output.csv", fieldList)
@@ -83,6 +88,8 @@ func processFleet(token, outFile string, fieldList []string) {
 		mods.ForEach(func(key, value gjson.Result) bool {
 
 			vals := make([]string, 0, fieldCount)
+
+			log.Printf(value.String())
 
 			for _, field := range fieldList {
 				v := value.Get(field)
@@ -161,7 +168,8 @@ func getFieldList() ([]string, error) {
 
 	file, err := os.Open("field_list")
 	if err != nil {
-		log.Fatal("Error opening field_list file:", err)
+		fmt.Println("Error opening field_list file: ", err)
+		return nil, err
 	}
 	defer file.Close()
 
@@ -174,7 +182,8 @@ func getFieldList() ([]string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal("Scanner error ", err)
+		fmt.Println("Error scanning lines from field list: ", err)
+		return nil, err
 	}
 
 	return list, nil
