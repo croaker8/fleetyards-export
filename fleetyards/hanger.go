@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/tidwall/gjson"
 )
@@ -23,9 +24,15 @@ func ExportHangerToCsv(token, outFile string, fieldList []string) error {
 	}
 	defer f.Close()
 
-	// get csv writer and write header with field names
+	// for column names change periods in field names to underscores
+	columnNames := make([]string, 0, len(fieldList))
+	for _, field := range fieldList {
+		columnNames = append(columnNames, strings.ReplaceAll(field, ".", "_"))
+	}
+
+	// get csv writer and write header with column names
 	w := csv.NewWriter(f)
-	err = w.Write(fieldList)
+	err = w.Write(columnNames)
 	if err != nil {
 		fmt.Printf("Error writing header line to output file: %s\n", err)
 		return err

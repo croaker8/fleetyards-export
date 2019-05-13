@@ -1,6 +1,8 @@
 # -- List of fields in the JSON hanger data downloaded from fleetyards.net
 # -- Add '#' character in front of field name to exclude it from the fields
 # --  extracted.
+# -- The column name for each field will have period "." replaced with
+# --  underscore "_" for better handling of column names in SQL.
 createdAt
 flagship
 hangarGroupIds
