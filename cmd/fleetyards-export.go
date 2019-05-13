@@ -3,9 +3,11 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"syscall"
 
-	"github.com/croaker8/fleetyards-export/fleetyards"
+	"github.com/quarkstar8/fleetyards-export/fleetyards"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var flyExCmd = &cobra.Command{
@@ -13,6 +15,19 @@ var flyExCmd = &cobra.Command{
 	Short: "fleetyards-export is a tool for exporting hanger data from fleetyards.net",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		// promt for password if arg not set
+		if password == "" {
+			fmt.Print("Enter Password: ")
+			bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+			if err != nil {
+				fmt.Printf("Error reading password from terminal: %s", err)
+				os.Exit(1)
+			} else {
+				fmt.Println()
+			}
+			password = string(bytePassword)
+		}
 
 		// get the field list to export
 		fieldList, err := getFieldList(fieldsPath)
@@ -43,15 +58,18 @@ var flyExCmd = &cobra.Command{
 		}
 
 		// signin to fleetyards service
+		fmt.Println("Connecting to service...")
 		token, err := fleetyards.Signin(username, password)
 		if err != nil {
 			os.Exit(6)
 		}
 
 		// get the data and export
+		fmt.Println("Exporting data...")
 		exportErr := fleetyards.ExportHangerToCsv(token, outputPath, fieldList)
 
 		// signout from service
+		fmt.Println("Disconnecting from service...")
 		err = fleetyards.Signout(token)
 		if err != nil {
 			os.Exit(7)
@@ -62,6 +80,7 @@ var flyExCmd = &cobra.Command{
 			os.Exit(8)
 		}
 
+		fmt.Println("Export complete.")
 	},
 }
 
@@ -71,13 +90,12 @@ var fieldsPath string
 var outputPath string
 
 func init() {
-	flyExCmd.Flags().StringVarP(&username, "user", "u", "", "User name to login to fleetyards.net")
+	flyExCmd.Flags().StringVarP(&username, "user", "u", "", "User name to login to fleetyards.net (required)")
 	flyExCmd.Flags().StringVarP(&password, "pass", "p", "", "Password to login to fleetyards.net")
 	flyExCmd.Flags().StringVarP(&fieldsPath, "fields", "f", "export-field-list", "Path to fields list file")
 	flyExCmd.Flags().StringVarP(&outputPath, "output", "o", "output.csv", "Path to output file")
 
 	flyExCmd.MarkFlagRequired("user")
-	flyExCmd.MarkFlagRequired("pass")
 }
 
 // Execute -- execute the command
