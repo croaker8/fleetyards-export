@@ -96,6 +96,12 @@ func getHangerPage(fieldList []string, page int, token string) ([][]string, erro
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Error reading vehicles for page %d response status code: %d\n",
+			page, resp.StatusCode)
+		return nil, fmt.Errorf("read page response err")
+	}
+
 	// get string of body and return nil slice if no more data
 	bodyString := string(body)
 	if bodyString == "[]" {

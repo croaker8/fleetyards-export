@@ -2,6 +2,7 @@ package fleetyards
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,16 +26,28 @@ func Signin(user, pass string) (string, error) {
 		return "", err
 	}
 
-	// read response body json and extract token field
+	// read response body json
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("Error reading fleetyards.net session connect body: %s\n", err)
 		return "", err
 	}
-	token := gjson.Get(string(body), "token")
 
-	return token.Str, nil
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Get session got status code %d, %s\n", resp.StatusCode, body)
+		return "", errors.New("Get session bad status")
+	}
+
+	// extract token from body
+	token := gjson.Get(string(body), "token")
+	tokenString := token.Str
+	if len(tokenString) == 0 {
+		fmt.Printf("Session token string is empty")
+		return "", errors.New("Empty token string")
+	}
+
+	return tokenString, nil
 }
 
 // Signout - disconnect from fleetyards session
