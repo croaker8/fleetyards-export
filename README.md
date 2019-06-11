@@ -6,7 +6,7 @@ This command will login to your fleetyards.net account and export the data for t
 Edit the export-field-list file and add # at beginning of line to exclude specific fields from the CSV output.
 
 ## Build
-  go build -o fleetyards-export
+    go build -o fleetyards-export
 ## Usage
 Usage is shown if -h (or --help) flag is supplied. The -u (or --user) flag is required. Password may be specificed using the -p (or --pass) flag or if not specified on the command line the user will be prompted to enter the password and the input will be hidden.
 
