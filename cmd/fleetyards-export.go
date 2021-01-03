@@ -2,12 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"syscall"
-
 	"github.com/quarkstar8/fleetyards-export/fleetyards"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
+	"os"
 )
 
 var flyExCmd = &cobra.Command{
@@ -17,17 +14,17 @@ var flyExCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// promt for password if arg not set
-		if password == "" {
-			fmt.Print("Enter Password: ")
-			bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-			if err != nil {
-				fmt.Printf("Error reading password from terminal: %s", err)
-				os.Exit(1)
-			} else {
-				fmt.Println()
-			}
-			password = string(bytePassword)
-		}
+		//if password == "" {
+		//	fmt.Print("Enter Password: ")
+		//	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+		//	if err != nil {
+		//		fmt.Printf("Error reading password from terminal: %s", err)
+		//		os.Exit(1)
+		//	} else {
+		//		fmt.Println()
+		//	}
+		//	password = string(bytePassword)
+		//}
 
 		// get the field list to export
 		fieldList, err := getFieldList(fieldsPath)
@@ -58,22 +55,22 @@ var flyExCmd = &cobra.Command{
 		}
 
 		// signin to fleetyards service
-		fmt.Println("Connecting to service...")
-		token, err := fleetyards.Signin(username, password)
-		if err != nil {
-			os.Exit(6)
-		}
+		//fmt.Println("Connecting to service...")
+		//token, err := fleetyards.Signin(username, password)
+		//if err != nil {
+		//	os.Exit(6)
+		//}
 
 		// get the data and export
 		fmt.Println("Exporting data...")
-		exportErr := fleetyards.ExportHangerToCsv(token, outputPath, fieldList)
+		exportErr := fleetyards.ExportHangerToCsv(username, outputPath, fieldList)
 
 		// signout from service
-		fmt.Println("Disconnecting from service...")
-		err = fleetyards.Signout(token)
-		if err != nil {
-			os.Exit(7)
-		}
+		//fmt.Println("Disconnecting from service...")
+		//err = fleetyards.Signout(token)
+		//if err != nil {
+		//	os.Exit(7)
+		//}
 
 		// set error code signout worked but export failed
 		if exportErr != nil {

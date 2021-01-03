@@ -14,7 +14,7 @@ import (
 var defaultPageSize = 30
 
 // ExportHangerToCsv - export fleetyards.net hanger data to CSV file
-func ExportHangerToCsv(token, outFile string, fieldList []string) error {
+func ExportHangerToCsv(username, outFile string, fieldList []string) error {
 
 	// create the new output file
 	f, err := os.Create(outFile)
@@ -38,30 +38,44 @@ func ExportHangerToCsv(token, outFile string, fieldList []string) error {
 		return err
 	}
 
-	// loop through paged responses from fleetyards.net
-	for page := 1; ; page++ {
+	//// loop through paged responses from fleetyards.net
+	//for page := 1; ; page++ {
+	//
+	//	// get page of data
+	//	pageList, err := getHangerPage(fieldList, page, token)
+	//	if err != nil {
+	//		// handing page failed
+	//		return err
+	//	}
+	//
+	//	// list will be nil if there is no more data
+	//	if pageList == nil {
+	//		break
+	//	}
+	//
+	//	// write values to output file
+	//	for _, vals := range pageList {
+	//		err = w.Write(vals)
+	//		if err != nil {
+	//			fmt.Printf("Error writing row of data to output: %s\n", err)
+	//			return err
+	//		}
+	//	}
+	//
+	//}
 
-		// get page of data
-		pageList, err := getHangerPage(fieldList, page, token)
+	fleetList, err := getPublicHanger(fieldList, username)
+	if err != nil {
+		// handing page failed
+		return err
+	}
+
+	for _, vals := range fleetList {
+		err = w.Write(vals)
 		if err != nil {
-			// handing page failed
+			fmt.Printf("Error writing row of data to output: %s\n", err)
 			return err
 		}
-
-		// list will be nil if there is no more data
-		if pageList == nil {
-			break
-		}
-
-		// write values to output file
-		for _, vals := range pageList {
-			err = w.Write(vals)
-			if err != nil {
-				fmt.Printf("Error writing row of data to output: %s\n", err)
-				return err
-			}
-		}
-
 	}
 
 	// flush output data
@@ -72,6 +86,79 @@ func ExportHangerToCsv(token, outFile string, fieldList []string) error {
 	}
 
 	return nil
+}
+
+func getPublicHanger(fieldList []string, user string) ([][]string, error) {
+
+	// build request for the user
+	url := fmt.Sprintf("https://api.fleetyards.net/v1/vehicles/%s/fleetchart", user)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Printf("Error creating get fleetchart request for user %s: %s\n", user, err)
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+
+	// request the page
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("Error getting fleetchart for user %s: %s\n", user, err)
+		return nil, err
+	}
+
+	// read the response body
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading user %s fleetchart: %s\n", user, err)
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Error reading fleetchart for user %s response status code: %d\n",
+			user, resp.StatusCode)
+		return nil, fmt.Errorf("read page response err")
+	}
+
+	// get string of body and return nil slice if no more data
+	bodyString := string(body)
+	if bodyString == "[]" {
+		return nil, nil
+	}
+
+	// get count of fields for initializing vals slice
+	fieldCount := len(fieldList)
+
+	// parse the body
+	mods := gjson.Parse(bodyString)
+
+	// create list to return
+	fleetList := make([][]string, 0, defaultPageSize)
+
+	// loop through each item in the page
+	mods.ForEach(func(key, value gjson.Result) bool {
+
+		// make slice to hold the field values
+		vals := make([]string, 0, fieldCount)
+
+		//fmt.Printf(value.String())
+
+		// get the fields
+		for _, field := range fieldList {
+			v := value.Get(field)
+			vals = append(vals, v.String())
+		}
+
+		// add field values to page list
+		fleetList = append(fleetList, vals)
+
+		return true // keep iterating
+	})
+
+	return fleetList, nil
+
 }
 
 func getHangerPage(fieldList []string, page int, token string) ([][]string, error) {
