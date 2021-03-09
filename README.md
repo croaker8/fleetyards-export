@@ -1,5 +1,3 @@
-# **NOTE** This program will currently not work as third party logins are currently disabled on fleetyards.net
-
 # fleetyards-export
 Tool for exporting your public hanger from https://fleetyards.net.
 
