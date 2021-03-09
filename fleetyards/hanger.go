@@ -13,7 +13,7 @@ import (
 
 var defaultPageSize = 30
 
-// ExportHangerToCsv - export fleetyards.net hanger data to CSV file
+// ExportHangerToCsv - export fleetyards.net public hanger to CSV file
 func ExportHangerToCsv(username, outFile string, fieldList []string) error {
 
 	// create the new output file

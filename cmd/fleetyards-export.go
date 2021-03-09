@@ -9,7 +9,7 @@ import (
 
 var flyExCmd = &cobra.Command{
 	Use:   "fleetyards-export",
-	Short: "fleetyards-export is a tool for exporting hanger data from fleetyards.net",
+	Short: "fleetyards-export is a tool for exporting public hanger data from fleetyards.net",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -82,13 +82,11 @@ var flyExCmd = &cobra.Command{
 }
 
 var username string
-var password string
 var fieldsPath string
 var outputPath string
 
 func init() {
-	flyExCmd.Flags().StringVarP(&username, "user", "u", "", "User name to login to fleetyards.net (required)")
-	flyExCmd.Flags().StringVarP(&password, "pass", "p", "", "Password to login to fleetyards.net")
+	flyExCmd.Flags().StringVarP(&username, "user", "u", "", "User name on fleetyards.net (required)")
 	flyExCmd.Flags().StringVarP(&fieldsPath, "fields", "f", "export-field-list", "Path to fields list file")
 	flyExCmd.Flags().StringVarP(&outputPath, "output", "o", "output.csv", "Path to output file")
 
