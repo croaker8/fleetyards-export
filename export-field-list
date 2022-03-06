@@ -47,7 +47,7 @@ model.name
 #model.pledgePrice
 #model.price
 #model.productionNote
-#model.productionStatus
+model.productionStatus
 #model.rollMax
 #model.rsiId
 model.rsiName
